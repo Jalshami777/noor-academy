@@ -30,9 +30,8 @@ jobs:
         run: |
           rm -rf www
           mkdir -p www
-          cp -r noor_academy/* www/
+          cp index.html local-records.js manifest.webmanifest noor-icon.svg service-worker.js www/
           ls -la www/
-          echo "--- index check ---"
           ls -lh www/index.html
 
       - name: Sync Capacitor
