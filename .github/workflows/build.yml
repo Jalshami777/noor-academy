@@ -1,66 +1,67 @@
-name: build-apk
+
+name: Build Noor Academy APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
-
-      - name: Verify project files
-        run: |
-          ls -la
-          cat package.json | head -n 30
-          cat capacitor.config.ts 2>/dev/null || cat capacitor.config.json 2>/dev/null || echo "no capacitor config"
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build web
+      - name: Prepare web files
         run: |
-          if grep -q '"build"' package.json; then
-            npm run build
-          else
-            echo "skip build - no build script"
-          fi
-
-      - name: Verify Capacitor
-        run: npx cap --version
+          mkdir -p www
+          cp index.html www/
+          cp local-records.js www/
+          cp manifest.webmanifest www/
+          cp service-worker.js www/
+          cp noor-icon.svg www/
 
       - name: Create Android project
         run: |
-          if [ ! -d "android" ]; then
+          if [ ! -d android ]; then
             npx cap add android
-          else
-            echo "android folder exists"
           fi
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build debug APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: noor-academy-apk
+          name: Noor-Academy-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
