@@ -1,53 +1,42 @@
-
 name: Build Noor Academy APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '21'
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Install dependencies
         run: npm install
 
       - name: Prepare web files
         run: |
+          rm -rf www
           mkdir -p www
-          cp index.html www/
-          cp local-records.js www/
-          cp manifest.webmanifest www/
-          cp service-worker.js www/
-          cp noor-icon.svg www/
-
-      - name: Create Android project
-        run: |
-          if [ ! -d android ]; then
-            npx cap add android
-          fi
+          cp -r noor_academy/* www/
+          ls -la www/
+          echo "--- index check ---"
+          ls -lh www/index.html
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -56,12 +45,10 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Noor-Academy-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
