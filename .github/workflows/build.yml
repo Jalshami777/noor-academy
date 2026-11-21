@@ -2,17 +2,16 @@
 name: Build Noor Academy APK
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -23,13 +22,23 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '20'
 
-      - name: Set up Java
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Verify project files
+        run: |
+          test -f package.json || {
+            echo "ERROR: package.json not found in repository root"
+            exit 1
+          }
 
       - name: Install dependencies
         run: npm install
@@ -37,25 +46,44 @@ jobs:
       - name: Build web
         run: npm run build
 
-      - name: Create Android project if missing
+      - name: Verify Capacitor
+        run: |
+          test -f capacitor.config.json || {
+            test -f capacitor.config.ts || {
+              echo "ERROR: Capacitor config not found"
+              exit 1
+            }
+          }
+          npm ls @capacitor/core
+          npm ls @capacitor/android
+
+      - name: Create Android project
         run: |
           if [ ! -d android ]; then
             npx cap add android
           fi
+          test -d android || {
+            echo "ERROR: Android directory was not created"
+            exit 1
+          }
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build APK
+      - name: Build debug APK
         run: |
+          test -f android/gradlew || {
+            echo "ERROR: Gradle wrapper not found"
+            exit 1
+          }
+          chmod +x android/gradlew
           cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: noor-academy-debug-apk
+          name: noor-academy-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
