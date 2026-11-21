@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "منصة نور لتعليم اللغة الإنجليزية",
+  "short_name": "نور",
+  "description": "Noor English Academy",
+  "lang": "ar",
+  "dir": "auto",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F7F8FA",
+  "theme_color": "#0F2340",
+  "icons": [
+    {
+      "src": "./icons/noor-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
